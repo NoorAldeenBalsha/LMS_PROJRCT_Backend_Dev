@@ -163,7 +163,7 @@ export class CourseService {
 
     const finalFilter: any = {};
 
-    // ✅ category as array
+    
     if (category) {
       const categoryArray = Array.isArray(category)
         ? category
@@ -173,7 +173,7 @@ export class CourseService {
       };
     }
 
-    // ✅ level as array
+    
     if (level) {
       const levelArray = Array.isArray(level)
         ? level
@@ -183,12 +183,12 @@ export class CourseService {
       };
     }
 
-    // Optional: primaryLanguage filter
+    
     if (primaryLanguage) {
       finalFilter.primaryLanguage = primaryLanguage;
     }
 
-    // ✅ Sorting
+    
     let sortParam: any = {};
     switch (sortBy) {
       case 'price-lowtohigh':
@@ -296,10 +296,8 @@ export class CourseService {
       courses: localizedCourses,
     };
   }
-
   //============================================================================
   // Get all courses  sorting, pagination, and role-based access
-
   public async getAllCoursesNoFilter(
     sortBy: string = 'price-lowtohigh',
     page: number = 1,
