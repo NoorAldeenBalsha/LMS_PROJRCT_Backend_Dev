@@ -9,6 +9,7 @@ import { LectureDTO } from './lecture-course.dto';
 export enum PrimaryLanguage {
   EN = 'English',
   AR = 'Arabic',
+  BOTH='Both'
 }
 
 // DTO for localized text fields (e.g., title, description)
@@ -55,20 +56,27 @@ export class CreateCourseDto {
 
   // Primary language of the course: EN or AR
   @IsEnum(PrimaryLanguage, {
-    message: (args) => args.object['lang'] === 'ar' ? 'اللغة الأساسية غير صحيحة' : 'Invalid primary language',
-  })
-  @Transform(({ value }) => {
-    if (!value) return PrimaryLanguage.EN;
+  message: (args) =>
+    args.object['lang'] === 'ar'
+      ? 'اللغة الأساسية غير صحيحة'
+      : 'Invalid primary language',
+})
+@Transform(({ value }) => {
+  if (!value) return PrimaryLanguage.EN;
 
-    const val = value.toString().toLowerCase();
+  const val = value.toString().toLowerCase();
 
-    if (val === 'en' || val === 'english') return PrimaryLanguage.EN;
-    if (val === 'ar' || val === 'arabic') return PrimaryLanguage.AR;
+  if (val === 'en' || val === 'english') return PrimaryLanguage.EN;
+  if (val === 'ar' || val === 'arabic') return PrimaryLanguage.AR;
+  if (val === 'both' || val === 'كلاهما') return PrimaryLanguage.BOTH;
 
-    return value;
-  })
-  @ApiProperty()
-  primaryLanguage: PrimaryLanguage;
+  return value; // fallback — may trigger validation error if not in enum
+})
+@ApiProperty({
+  enum: PrimaryLanguage,
+  description: 'Primary language of the course (EN, AR, BOTH)',
+})
+primaryLanguage: PrimaryLanguage;
 
   // Subtitle of the course
   @IsNotEmpty({ message: (args) => args.object['lang'] === 'ar' ? 'العنوان الفرعي مطلوب' : 'Subtitle is required' })
