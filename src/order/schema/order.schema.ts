@@ -41,8 +41,8 @@ export class Order {
   @Prop({ required: true })
   courseImage: string;
 
-  @Prop({ required: true, type: Object })
-  courseTitle: { en: string; ar: string };
+  @Prop({ required: true})
+  courseTitle:string;
 
   @Prop({ type: mongoose.Types.ObjectId, ref: 'Course', required: true })
   courseId: Types.ObjectId;

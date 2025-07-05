@@ -60,11 +60,9 @@ export class OrderDto {
   @IsNotEmpty()
   courseImage: string;
 
-  @IsObject()
-  @ValidateNested()
-  @Type(() => LocalizedTitle)
+ @IsString()
   @IsNotEmpty()
-  courseTitle: LocalizedTitle;
+  courseTitle: string;
 
   @IsMongoId()
   @IsNotEmpty()

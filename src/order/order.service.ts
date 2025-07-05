@@ -51,9 +51,8 @@ export class OrderService {
         purchase_units: [
           {
             reference_id: orderDto.courseId.toString(),
-            description: typeof orderDto.courseTitle === 'object'
-              ? orderDto.courseTitle[lang] || ''
-              : orderDto.courseTitle,
+            description:  orderDto.courseTitle ,
+              courseTitle:orderDto.courseTitle,
             amount: {
               currency_code: 'USD',
               value: orderDto.coursePricing.toFixed(2),
