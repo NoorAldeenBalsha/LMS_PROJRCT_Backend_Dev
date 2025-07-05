@@ -175,9 +175,7 @@ export class CourseService {
 
     
     if (level) {
-      const levelArray = Array.isArray(level)
-        ? level
-        : level.split(',');
+      const levelArray = Array.isArray(level) ? level : level.split(',');
       finalFilter.level = {
         $in: levelArray.map((id) => new Types.ObjectId(id)),
       };
@@ -207,7 +205,9 @@ export class CourseService {
         sortParam = { pricing: 1 };
     }
 
-    const skip = (page - 1) * limit;
+    const validatedPage = Math.max(1, page);
+    const validatedLimit = Math.max(1, limit);
+    const skip = (validatedPage - 1) * validatedLimit;
 
     const totalCourses = await this.courseModel.countDocuments(finalFilter);
 
@@ -232,7 +232,9 @@ export class CourseService {
       const obj = course.toObject();
 
       const categoryTitle =
-        obj.category && typeof obj.category !== 'string' && 'title' in obj.category
+        obj.category &&
+        typeof obj.category !== 'string' &&
+        'title' in obj.category
           ? obj.category.title
           : {};
 
@@ -255,8 +257,6 @@ export class CourseService {
         })
         .filter(Boolean);
 
-    
-
       const isStudent = user?.role === 'student';
 
       if (isStudent) {
@@ -270,8 +270,8 @@ export class CourseService {
           level: levelTitle?.[lang] ?? '',
           category: categoryTitle?.[lang] ?? '',
           students: formattedStudents,
-          createdAt: (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null
-
+          createdAt:
+            (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
         };
       } else {
         return {
@@ -284,7 +284,8 @@ export class CourseService {
           level: levelTitle ?? {},
           category: categoryTitle ?? {},
           students: formattedStudents,
-          createdAt: (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
+          createdAt:
+            (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
         };
       }
     });
@@ -303,8 +304,8 @@ export class CourseService {
     page: number = 1,
     limit: number = 10,
     lang: 'en' | 'ar' = 'en',
-    categoryIds?: string, 
-    levelIds?: string     
+    categoryIds?: string,
+    levelIds?: string,
   ): Promise<{
     totalCourses: number;
     totalPages: number;
@@ -315,19 +316,20 @@ export class CourseService {
 
     const finalFilter: any = {};
 
-
     if (categoryIds) {
-      const categoryArray = categoryIds.split(',').map((id) => new Types.ObjectId(id.trim()));
+      const categoryArray = categoryIds
+        .split(',')
+        .map((id) => new Types.ObjectId(id.trim()));
       finalFilter.category = { $in: categoryArray };
     }
 
-  
     if (levelIds) {
-      const levelArray = levelIds.split(',').map((id) => new Types.ObjectId(id.trim()));
+      const levelArray = levelIds
+        .split(',')
+        .map((id) => new Types.ObjectId(id.trim()));
       finalFilter.level = { $in: levelArray };
     }
 
-  
     let sortParam: any = {};
     switch (sortBy) {
       case 'price-lowtohigh':
@@ -370,13 +372,15 @@ export class CourseService {
       const obj = course.toObject();
 
       const categoryTitle =
-        obj.category && typeof obj.category !== 'string' && 'title' in obj.category
-          ? obj.category.title?.[lang] ?? ''
+        obj.category &&
+        typeof obj.category !== 'string' &&
+        'title' in obj.category
+          ? (obj.category.title?.[lang] ?? '')
           : '';
 
       const levelTitle =
         obj.level && typeof obj.level !== 'string' && 'title' in obj.level
-          ? obj.level.title?.[lang] ?? ''
+          ? (obj.level.title?.[lang] ?? '')
           : '';
 
       const formattedStudents = (obj.students || [])
@@ -404,8 +408,7 @@ export class CourseService {
           ? obj.objectives.map((o: any) => o?.[lang] ?? '')
           : [],
         students: formattedStudents,
-        createdAt: (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null
-        
+        createdAt: (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
       };
     });
 
@@ -414,7 +417,6 @@ export class CourseService {
       totalPages: Math.ceil(totalCourses / limit),
       currentPage: page,
       courses: localizedCourses,
-      
     };
   }
   //============================================================================
@@ -432,7 +434,9 @@ export class CourseService {
     let role = 'guest';
 
     if (user?.id) {
-      const currentUser = await this.userService.getCurrentUserDocument(user.id);
+      const currentUser = await this.userService.getCurrentUserDocument(
+        user.id,
+      );
       role = currentUser?.role ?? 'guest';
     }
 
@@ -441,7 +445,9 @@ export class CourseService {
     const filter: any = { _id: id };
 
     if (Array.isArray(categoryIds) && categoryIds.length > 0) {
-      filter.category = { $in: categoryIds.map((id) => new Types.ObjectId(id)) };
+      filter.category = {
+        $in: categoryIds.map((id) => new Types.ObjectId(id)),
+      };
     }
 
     if (Array.isArray(levelIds) && levelIds.length > 0) {
@@ -487,7 +493,7 @@ export class CourseService {
     }
 
     const getLocalizedValue = (field: any) => {
-      return typeof field === 'object' ? field?.[lang] ?? '' : '';
+      return typeof field === 'object' ? (field?.[lang] ?? '') : '';
     };
 
     const getLocalizedArray = (arr: any[]) => {
@@ -517,7 +523,9 @@ export class CourseService {
       curriculum: courseDetails.curriculum,
       students: formattedStudents,
       isPublished: courseDetails.isPublished,
-      ...(courseDetails.createdAt ? { createdAt: courseDetails.createdAt } : {}),
+      ...(courseDetails.createdAt
+        ? { createdAt: courseDetails.createdAt }
+        : {}),
     };
 
     if (isStudent) {
