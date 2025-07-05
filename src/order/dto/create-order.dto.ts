@@ -1,70 +1,75 @@
 import { Type } from 'class-transformer';
-import { IsString, IsNotEmpty, IsEmail, IsDate, IsMongoId, IsNumber, IsObject, ValidateNested } from 'class-validator';
+import {
+  IsString, IsNotEmpty, IsEmail, IsDate,
+  IsMongoId, IsNumber, IsObject,
+  ValidateNested, IsOptional
+} from 'class-validator';
 import { Types } from 'mongoose';
 
-class LocalizedTitel{
-    @IsString()
-    en:string
-    @IsString()
-    ar:string
+class LocalizedTitle {
+  @IsString()
+  en: string;
+
+  @IsString()
+  ar: string;
 }
+
 export class OrderDto {
+  @IsString()
+  @IsNotEmpty()
+  userName: string;
 
-    @IsString()
-    @IsNotEmpty()
-    userName: string;
+  @IsEmail()
+  @IsNotEmpty()
+  userEmail: string;
 
-    @IsEmail()
-    @IsNotEmpty()
-    userEmail: string;
+  @IsOptional()
+  @IsString()
+  orderStatus?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    orderStatus: string;
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    paymentMethod: string;
+  @IsOptional()
+  @IsString()
+  paymentStatus?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    paymentStatus: string;
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  orderDate?: Date;
 
-    @IsDate()
-    @Type(()=>Date)
-    @IsNotEmpty()
-    orderDate: Date;
+  @IsOptional()
+  @IsString()
+  paymentId?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    paymentId: string;
+  @IsOptional()
+  @IsString()
+  payerId?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    payerId: string;
+  @IsMongoId()
+  @IsNotEmpty()
+  instructorId: Types.ObjectId;
 
-    @IsMongoId()
-    @IsNotEmpty()
-    instructorId: Types.ObjectId;
+  @IsString()
+  @IsNotEmpty()
+  instructorName: string;
 
-    @IsString()
-    @IsNotEmpty()
-    instructorName: string;
+  @IsString()
+  @IsNotEmpty()
+  courseImage: string;
 
-    @IsString()
-    @IsNotEmpty()
-    courseImage: string;
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocalizedTitle)
+  @IsNotEmpty()
+  courseTitle: LocalizedTitle;
 
-    @IsObject()
-    @ValidateNested()
-    @Type(()=>LocalizedTitel)
-    @IsNotEmpty()
-    courseTitle: string;
+  @IsMongoId()
+  @IsNotEmpty()
+  courseId: Types.ObjectId;
 
-    @IsMongoId()
-    @IsNotEmpty()
-    courseId: Types.ObjectId;
-
-    @IsNumber()
-    coursePricing: number;
+  @IsNumber()
+  coursePricing: number;
 }

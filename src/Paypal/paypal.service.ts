@@ -1,45 +1,53 @@
+import * as paypal from '@paypal/checkout-server-sdk';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as paypal from '@paypal/checkout-server-sdk';
 
 @Injectable()
 export class PaypalService {
-  private readonly client: paypal.core.PayPalHttpClient;
+  private client: paypal.core.PayPalHttpClient;
 
-  constructor(private readonly configService: ConfigService) {
-    const clientId = this.configService.get<string>('PAYPAL_CLIENT_ID');
-    const clientSecret = this.configService.get<string>('PAYPAL_CLIENT_SECRET');
-    const baseApiUrl = this.configService.get<string>('PAYPAL_BASE_API');
-
+  constructor(private configService: ConfigService) {
+    const clientId = 'AQ2DyWK8hB66bbRbWK5gc61IxetlZF5dK55Q69jCjNSuRN9JBTTGsvzLJLrEuCbIg_e3if3DLxzRD8id';
+    const clientSecret = 'EA3wZ1YBH-B-3oIThA0Yxd0ZOCjxcaWS2_K8a3aYFw7TLBtZlV_MVt0bhMH1pkVzFoF3csSBUVcHGSpO';
+    const baseApiUrl = 'https://api-m.sandbox.paypal.com';
+    console.log(clientId )
+    console.log(clientSecret )
+    console.log(baseApiUrl )
     if (!clientId || !clientSecret || !baseApiUrl) {
-      throw new Error('Missing PayPal configuration in environment variables.');
+      throw new Error('PayPal environment variables are missing');
     }
 
-    // Custom PayPal Environment
-    class CustomEnvironment extends paypal.core.PayPalEnvironment {
-      constructor() {
-        super(clientId, clientSecret);
-      }
-      public baseUrl(): string {
-        return baseApiUrl;
-      }
-    }
+    const environment =
+      baseApiUrl.includes('sandbox')
+        ? new paypal.core.SandboxEnvironment(clientId, clientSecret)
+        : new paypal.core.LiveEnvironment(clientId, clientSecret);
 
-    const environment = new CustomEnvironment();
     this.client = new paypal.core.PayPalHttpClient(environment);
   }
 
-  public async createPayment(paymentData: paypal.orders.OrderRequest): Promise<paypal.orders.Order> {
+  async createPayment(orderData: any): Promise<any> {
     const request = new paypal.orders.OrdersCreateRequest();
-    request.prefer('return=representation');
-    request.requestBody(paymentData);
+    request.requestBody(orderData);
 
     try {
       const response = await this.client.execute(request);
       return response.result;
-    } catch (err) {
-      console.error(' Error creating PayPal payment:', err);
+    } catch (error) {
+      console.error('❌ Error creating PayPal payment:', error);
       throw new InternalServerErrorException('PayPal payment creation failed.');
+    }
+  }
+
+  async capturePayment(orderId: string): Promise<any> {
+    const request = new paypal.orders.OrdersCaptureRequest(orderId);
+    request.requestBody({});
+
+    try {
+      const response = await this.client.execute(request);
+      return response.result;
+    } catch (error) {
+      console.error('❌ Error capturing PayPal payment:', error);
+      throw new InternalServerErrorException('Failed to capture PayPal payment.');
     }
   }
 }

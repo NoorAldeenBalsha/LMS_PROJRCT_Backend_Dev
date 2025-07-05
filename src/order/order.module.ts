@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { OrderController } from './order.controller';
-import { CheckoutModule } from 'src/Paypal/paypal.module';
+import { PaypalModule } from '../Paypal/paypal.module';
 import { DatabaseModule } from 'src/db/database.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Order, OrderSchema } from './schema/order.schema';
@@ -11,14 +11,19 @@ import { CourseModule } from 'src/course/course.module';
 
 
 @Module({
-  controllers: [OrderController],
-  providers: [OrderService],
-  imports:[CheckoutModule,
+   imports:[
+    forwardRef(()=>PaypalModule),
+    MongooseModule.forFeature([{name:Order.name,schema:OrderSchema}]),
+    PaypalModule,
     DatabaseModule,
     StudentCourseModule,
     CourseModule,
     UserModule,
-    MongooseModule.forFeature([{name:Order.name,schema:OrderSchema}])
-  ]
+    
+  ],
+  controllers: [OrderController],
+  providers: [OrderService],
+ 
+  exports:[MongooseModule]
 })
 export class OrderModule {}

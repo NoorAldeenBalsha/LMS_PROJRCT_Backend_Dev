@@ -42,7 +42,7 @@ export class OrderController {
     @Req() req: any,
   ) {
     const lang = req.lang || 'en';
-    return await this.orderService.capturePaymentAndFinalizeOrder(body, lang);
+    return await this.orderService.captureOrder(body.paymentId,body.payerId);
   }
 
 

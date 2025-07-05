@@ -9,7 +9,7 @@ import { AuthRolesGuard } from 'src/user/guard/auth-role.guard';
 import { AuthGuard } from 'src/user/guard/auth.guard';
 
 @ApiTags('Student Course')
-@Controller('student-course')
+@Controller('api/student-course')
 export class StudentCourseController {
   constructor(private readonly studentCourseService: StudentCourseService) {}
 

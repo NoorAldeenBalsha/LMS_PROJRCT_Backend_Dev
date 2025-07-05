@@ -475,93 +475,76 @@ export class CourseService {
   //============================================================================
   // Get course details by ID with localization
   public async getCourseDetailsByID(
-    id: Types.ObjectId,
-    lang: 'en' | 'ar' = 'en',
-    user?: any,
-  ) {
-    lang = ['en', 'ar'].includes(lang) ? lang : 'en';
+  id: Types.ObjectId,
+  lang: 'en' | 'ar' = 'en',
+  user?: any,
+) {
+  lang = ['en', 'ar'].includes(lang) ? lang : 'en';
 
+  let role = 'guest';
+
+  if (user?.id) {
     const currentUser = await this.userService.getCurrentUserDocument(user.id);
-    const role = currentUser?.role || 'guest';
-    const isStudent = role === 'student';
+    role = currentUser?.role ?? 'guest';
+  }
 
-    const courseDetails = (await this.courseModel
-      .findById(id)
-      .populate('curriculum')
-      .populate('category')
-      .populate('level')
-      .populate({
-        path: 'students',
-        populate: {
-          path: 'userId',
-          model: 'User',
-          select: '_id userName userEmail gender',
-        },
-      })) as any;
+  const isStudent = role === 'student';
 
-    if (!courseDetails) {
-      const message = lang === 'ar' ? 'الكورس غير موجود' : 'Course not found';
-      throw new NotFoundException(message);
-    }
+  const courseDetails = (await this.courseModel
+    .findById(id)
+    .populate('curriculum')
+    .populate('category')
+    .populate('level')
+    .populate({
+      path: 'students',
+      populate: {
+        path: 'userId',
+        model: 'User',
+        select: '_id userName userEmail gender',
+      },
+    })) as any;
 
-    const getLocalizedValue = (field: any) => {
-      return field?.[lang] ?? '';
-    };
+  if (!courseDetails) {
+    const message = lang === 'ar' ? 'الكورس غير موجود' : 'Course not found';
+    throw new NotFoundException(message);
+  }
 
-    const getLocalizedArray = (arr: any[]) => {
-      return Array.isArray(arr) ? arr.map((obj) => obj?.[lang] ?? '') : [];
-    };
+  const getLocalizedValue = (field: any) => {
+    return field?.[lang] ?? '';
+  };
 
-    // معالجة بيانات الطلاب
-    const formattedStudents = (courseDetails.students || [])
-      .map((student: any) => {
-        const user = student.userId;
-        if (!user) return null;
+  const getLocalizedArray = (arr: any[]) => {
+    return Array.isArray(arr) ? arr.map((obj) => obj?.[lang] ?? '') : [];
+  };
 
-        return {
-          _id: user._id,
-          userName: user.userName,
-          userEmail: user.userEmail,
-          gender: user.gender,
-        };
-      })
-      .filter(Boolean);
+  const formattedStudents = (courseDetails.students ?? [])
+    .map((student: any) => {
+      const user = student.userId;
+      if (!user) return null;
 
-    // إذا كان الطالب، نعرض المعلومات بلغته فقط
-    if (isStudent) {
       return {
-        _id: courseDetails._id,
-        instructorId: courseDetails.instructorId,
-        instructorName: courseDetails.instructorName,
-        title: getLocalizedValue(courseDetails.title),
-        category: getLocalizedValue(courseDetails.category?.title),
-        level: getLocalizedValue(courseDetails.level?.title),
-        image: courseDetails.image,
-        subtitle: getLocalizedValue(courseDetails.subtitle),
-        primaryLanguage: courseDetails.primaryLanguage,
-        description: getLocalizedValue(courseDetails.description),
-        welcomeMessage: getLocalizedValue(courseDetails.welcomeMessage),
-        objectives: getLocalizedArray(courseDetails.objectives),
-        pricing: courseDetails.pricing,
-        curriculum: courseDetails.curriculum,
-        students: formattedStudents,
-        isPublished: courseDetails.isPublished,
-        createdAt: courseDetails.createdAt,
+        _id: user._id,
+        userName: user.userName,
+        userEmail: user.userEmail,
+        gender: user.gender,
       };
-    }
+    })
+    .filter(Boolean);
+
+  if (isStudent) {
     return {
       _id: courseDetails._id,
       instructorId: courseDetails.instructorId,
       instructorName: courseDetails.instructorName,
-      title: courseDetails.title ?? {},
-      category: courseDetails.category?.title ?? {},
-      level: courseDetails.level?.title ?? {},
+      title: getLocalizedValue(courseDetails.title),
+      category: getLocalizedValue(courseDetails.category?.title),
+      level: getLocalizedValue(courseDetails.level?.title),
       image: courseDetails.image,
-      subtitle: courseDetails.subtitle ?? {},
+      subtitle: getLocalizedValue(courseDetails.subtitle),
       primaryLanguage: courseDetails.primaryLanguage,
-      description: courseDetails.description ?? {},
-      welcomeMessage: courseDetails.welcomeMessage ?? {},
-      objectives: courseDetails.objectives ?? [],
+      description: getLocalizedValue(courseDetails.description),
+      welcomeMessage: getLocalizedValue(courseDetails.welcomeMessage),
+      objectives: getLocalizedArray(courseDetails.objectives),
       pricing: courseDetails.pricing,
       curriculum: courseDetails.curriculum,
       students: formattedStudents,
@@ -569,6 +552,27 @@ export class CourseService {
       createdAt: courseDetails.createdAt,
     };
   }
+
+  return {
+    _id: courseDetails._id,
+    instructorId: courseDetails.instructorId,
+    instructorName: courseDetails.instructorName,
+    title: courseDetails.title ?? {},
+    category: courseDetails.category?.title ?? {},
+    level: courseDetails.level?.title ?? {},
+    image: courseDetails.image,
+    subtitle: courseDetails.subtitle ?? {},
+    primaryLanguage: courseDetails.primaryLanguage,
+    description: courseDetails.description ?? {},
+    welcomeMessage: courseDetails.welcomeMessage ?? {},
+    objectives: courseDetails.objectives ?? [],
+    pricing: courseDetails.pricing,
+    curriculum: courseDetails.curriculum,
+    students: formattedStudents,
+    isPublished: courseDetails.isPublished,
+    createdAt: courseDetails.createdAt,
+  };
+}
   //============================================================================
   // Update course by ID if instructor is authorized
   public async updateCourseByID(

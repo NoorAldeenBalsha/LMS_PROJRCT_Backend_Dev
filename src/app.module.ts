@@ -5,7 +5,7 @@ import { StudentCourseModule } from './student-course/student-course.module';
 import { CourseModule } from './course/course.module';
 import { CourseProgressModule } from './course-progress/course-progress.module';
 import { ConfigModule } from '@nestjs/config';
-import { CheckoutModule } from './Paypal/paypal.module';
+import { PaypalModule } from './Paypal/paypal.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { AppController } from './app.controller';
 import { MailModule } from './mail/mail.module';
@@ -23,7 +23,7 @@ import { AdminModule } from './admin/admin.module';
     OrderModule, 
     StudentCourseModule, 
     CourseModule, 
-    CheckoutModule,
+    PaypalModule,
     CourseProgressModule,
     CloudinaryModule,
     MailModule,
