@@ -10,9 +10,6 @@ export class PaypalService {
     const clientId = 'AQ2DyWK8hB66bbRbWK5gc61IxetlZF5dK55Q69jCjNSuRN9JBTTGsvzLJLrEuCbIg_e3if3DLxzRD8id';
     const clientSecret = 'EA3wZ1YBH-B-3oIThA0Yxd0ZOCjxcaWS2_K8a3aYFw7TLBtZlV_MVt0bhMH1pkVzFoF3csSBUVcHGSpO';
     const baseApiUrl = 'https://api-m.sandbox.paypal.com';
-    console.log(clientId )
-    console.log(clientSecret )
-    console.log(baseApiUrl )
     if (!clientId || !clientSecret || !baseApiUrl) {
       throw new Error('PayPal environment variables are missing');
     }

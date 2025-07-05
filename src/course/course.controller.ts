@@ -26,6 +26,7 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -43,10 +44,7 @@ export class CourseController {
   @Roles('admin', 'teacher')
   @ApiOperation({ summary: 'Add a new course' })
   @ApiResponse({ status: 201, description: 'Course created successfully' })
-  @ApiResponse({
-    status: 403,
-    description: 'Only admins or teachers can add courses',
-  })
+  @ApiResponse({ status: 403, description: 'Only admins or teachers can add courses',})
   @ApiBody({ description: 'Course creation data', type: CreateCourseDto })
   public AddNewCourse(
     @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
@@ -95,10 +93,7 @@ export class CourseController {
   @Roles('teacher')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get courses of the current instructor' })
-  @ApiResponse({
-    status: 200,
-    description: 'Instructor courses retrieved successfully',
-  })
+  @ApiResponse({ status: 200, description: 'Instructor courses retrieved successfully', })
   public getInstructorCourses(
     @CurrentUser() user: JWTPayloadType,
     @Req() req: any,
@@ -120,25 +115,25 @@ export class CourseController {
   @ApiResponse({ status: 200, description: 'Courses fetched successfully' })
   public getAllCourses(
     @Req() req: any,
-    @Query('category') category?: string,
-    @Query('level') level?: string,
+    @Query('category') category?: string,        
+    @Query('level') level?: string,               
     @Query('primaryLanguage') primaryLanguage?: string,
     @Query('sortBy') sortBy?: string,
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('useFilter') useFilter = false,
-    @Headers('lang') lang: 'en' | 'ar' = 'en', // ← اللغة من الهيدر مباشرة
+    @Headers('lang') lang: 'en' | 'ar' = 'en',
   ) {
     return this.courseService.getAllCourses(
       category,
       level,
       primaryLanguage,
       sortBy,
-      page,
-      limit,
+      +page,
+      +limit,
       useFilter,
       lang,
-      req.user, // ← يحتوي على user.role و user.id
+      req.user,
     );
   }
   //Get All Courses [PUBLIC]
@@ -150,38 +145,57 @@ export class CourseController {
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Headers('lang') lang: 'en' | 'ar' = 'en',
-    @Query('categoryId') categoryId?:string,
-    @Query('levelId') levelId ?:string,
+    @Query('category') categoryIds?:string,
+    @Query('level') levelIds ?:string,
   ) {
     
-    return this.courseService.getAllCoursesNoFilter(sortBy, +page, +limit, lang,categoryId,levelId);
+    return this.courseService.getAllCoursesNoFilter(sortBy, +page, +limit, lang,categoryIds,levelIds);
   }
   // GET COURSE BY ID [PUBLIC]
   @Get('getCourseById/:id')
   @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Get course details by ID' })
+  @ApiOperation({ summary: 'Get course details by ID with optional filters' })
   @ApiParam({ name: 'id', description: 'Course ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Course details retrieved successfully',
-  })
+  @ApiQuery({ name: 'sortBy', required: false, description: 'Sorting method (e.g., price-lowtohigh)' })
+  @ApiQuery({ name: 'category', required: false, type: [String], description: 'One or more Category IDs' })
+  @ApiQuery({ name: 'level', required: false, description: 'Level ID' })
+  @ApiResponse({ status: 200, description: 'Course details retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Course not found' })
-  public getCourseDetailsByID(@Param('id') id: string, @Req() req: any) {
-    
-    const lang = req.lang || 'en';
+  public getCourseDetailsByID(
+    @Param('id') id: string,
+    @Query('sortBy') sortBy: string,
+    @Query('category') category: string[] | string,
+    @Query('level') level: string[]| string,
+    @Req() req: any,
+  ) {
+    const lang: 'en' | 'ar' = ['en', 'ar'].includes(req.lang) ? req.lang : 'en';
 
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException({
         message: lang === 'ar' ? 'يوجد أخطاء' : 'There are errors',
-        errors:
-          lang === 'ar' ? 'معرف الدورة غير صالح' : 'Invalid course ID format',
+        errors: lang === 'ar' ? 'معرف الدورة غير صالح' : 'Invalid course ID format',
       });
     }
+
+    const categoryArray = Array.isArray(category)
+      ? category
+      : category
+      ? [category]
+      : [];
+      const levelyArray = Array.isArray(level)
+      ? level
+      : level
+      ? [level]
+      : [];
 
     return this.courseService.getCourseDetailsByID(
       new Types.ObjectId(id),
       lang,
       req.user,
+      
+      categoryArray,
+      levelyArray,
+      sortBy
     );
   }
   // DELETE COURSE[Admin & Teacher]
@@ -224,14 +238,8 @@ export class CourseController {
   @Roles('admin')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get course distribution by category (Admin only)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Course distribution data retrieved successfully.',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden. Only admins can access this resource.',
-  })
+  @ApiResponse({ status: 200, description: 'Course distribution data retrieved successfully.',})
+  @ApiResponse({status: 403,description: 'Forbidden. Only admins can access this resource.',})
   public getCourseDistribution(@Req() req: any) {
     const lang = req.lang || 'en';
     return this.courseService.getCourseDistributionByCategory(lang);
@@ -241,17 +249,9 @@ export class CourseController {
   @UseGuards(AuthGuard)
   @Roles('admin')
   @ApiBearerAuth('JWT')
-  @ApiOperation({
-    summary: 'Get statistics on published vs. unpublished courses (Admin only)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Publication status data retrieved successfully.',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden. Only admins can access this resource.',
-  })
+  @ApiOperation({summary: 'Get statistics on published vs. unpublished courses (Admin only)',})
+  @ApiResponse({ status: 200, description: 'Publication status data retrieved successfully.',})
+  @ApiResponse({ status: 403, description: 'Forbidden. Only admins can access this resource.',})
   public getCoursePublicationStats() {
     return this.courseService.getCoursePublicationStats();
   }

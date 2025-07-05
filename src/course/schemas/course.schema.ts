@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, {  HydratedDocument, Types } from "mongoose";
 export type CourseDocument = HydratedDocument<Course>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Course {
   // Localized title in English and Arabic
   @Prop({ required: true, type: Object })
@@ -65,6 +65,7 @@ export class Course {
   // Flag to determine if the course is published
   @Prop({ required: true })
   isPublished: boolean;
+  
 }
 // تعريف الـ CourseSchema قبل تصديره
 const CourseSchema = SchemaFactory.createForClass(Course);
