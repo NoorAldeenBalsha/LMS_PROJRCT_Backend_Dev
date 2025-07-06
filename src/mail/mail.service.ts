@@ -21,57 +21,58 @@ export class MailService {
   }
 
   async sendVerifyEmailTemplate(
-  toEmail: string,
-  verificationLink: string,
-  lang: 'ar' | 'en' = 'en'
-) {
-  // استبدال localhost بـ رابط الـ API الأساسي
-  const fullLink = verificationLink.replace(
-    'http://localhost:5000',
-    'https://lmsprojrctbackenddev-production-6b49.up.railway.app'
-  );
+    toEmail: string,
+    verificationLink: string,
+    lang: 'ar' | 'en' = 'en'
+  ) {
+    // استبدال localhost بـ رابط الـ API الأساسي
+    const fullLink = verificationLink.replace(
+      'http://localhost:5000',
+      'https://lmsprojrctbackenddev-production-6b49.up.railway.app'
+    );
 
-  const subject = lang === 'ar' ? 'تأكيد البريد الإلكتروني' : 'Email Verification';
-  const text =
-    lang === 'ar'
-      ? 'مرحباً، الرجاء الضغط على الزر التالي لتأكيد بريدك الإلكتروني.'
-      : 'Hello, please click the button below to verify your email.';
+    const subject = lang === 'ar' ? 'تأكيد البريد الإلكتروني' : 'Email Verification';
+    const text =
+      lang === 'ar'
+        ? 'مرحباً، الرجاء الضغط على الزر التالي لتأكيد بريدك الإلكتروني.'
+        : 'Hello, please click the button below to verify your email.';
 
-  const html =
-    lang === 'ar'
-      ? `
-    <div dir="rtl" style="font-family: 'Tahoma', 'Arial', sans-serif; background-color: #f2f2f2; padding: 40px;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <h2 style="color: #333;">مرحباً بك،</h2>
-        <p style="font-size: 16px; color: #555;">
-          شكراً لانضمامك إلينا. لتفعيل حسابك، اضغط على الزر أدناه:
-        </p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${fullLink}" style="background-color: #28a745; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; display: inline-block;">
-            تأكيد البريد الإلكتروني
-          </a>
+    const html =
+      lang === 'ar'
+        ? `
+      <div dir="rtl" style="font-family: 'Tahoma', 'Arial', sans-serif; background-color: #f2f2f2; padding: 40px;">
+        <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <h2 style="color: #333;">مرحباً بك،</h2>
+          <p style="font-size: 16px; color: #555;">
+            شكراً لانضمامك إلينا. لتفعيل حسابك، اضغط على الزر أدناه:
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${fullLink}" style="background-color: #28a745; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; display: inline-block;">
+              تأكيد البريد الإلكتروني
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-    `
-      : `
-    <div style="font-family: 'Arial', sans-serif; background-color: #f2f2f2; padding: 40px;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <h2 style="color: #333;">Welcome,</h2>
-        <p style="font-size: 16px; color: #555;">
-          Thank you for joining us. To activate your account, please click the button below:
-        </p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${fullLink}" style="background-color: #007bff; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; display: inline-block;">
-            Verify Email
-          </a>
+      `
+        : `
+      <div style="font-family: 'Arial', sans-serif; background-color: #f2f2f2; padding: 40px;">
+        <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <h2 style="color: #333;">Welcome,</h2>
+          <p style="font-size: 16px; color: #555;">
+            Thank you for joining us. To activate your account, please click the button below:
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${fullLink}" style="background-color: #007bff; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; display: inline-block;">
+              Verify Email
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-    `;
+      `;
 
-  await this.sendEmail(toEmail, subject, text, html, lang);
-}
+    await this.sendEmail(toEmail, subject, text, html, lang);
+  }
+  
   async sendRestPasswordTemplate(toEmail: string, resetLink: string, lang: 'ar' | 'en' = 'en') {
     const subject = lang === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Password Reset';
     const text = lang === 'ar'

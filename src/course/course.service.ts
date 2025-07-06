@@ -144,159 +144,123 @@ export class CourseService {
   // Get all courses with filters, sorting, pagination, and role-based access
 
   public async getAllCourses(
-    category?: string | string[],
-    level?: string | string[],
-    primaryLanguage?: string,
-    sortBy: string = 'price-lowtohigh',
-    page: number = 1,
-    limit: number = 10,
-    useFilter: boolean = false,
-    lang: 'en' | 'ar' = 'en',
-    user?: any,
-  ): Promise<{
-    totalCourses: number;
-    totalPages: number;
-    currentPage: number;
-    courses: any[];
-  }> {
-    lang = ['en', 'ar'].includes(lang) ? lang : 'en';
+  category?: string | string[],
+  level?: string | string[],
+  primaryLanguage?: string,
+  sortBy: string = 'price-lowtohigh',
+  page: number = 1,
+  limit: number = 10,
+  useFilter: boolean = false,
+  lang: 'en' | 'ar' = 'en',
+  user?: any,
+): Promise<{
+  totalCourses: number;
+  totalPages: number;
+  currentPage: number;
+  courses: any[];
+}> {
+  lang = ['en', 'ar'].includes(lang) ? lang : 'en';
 
-    const finalFilter: any = {};
+  const finalFilter: any = {};
 
-    
-    if (category) {
-      const categoryArray = Array.isArray(category)
-        ? category
-        : category.split(',');
-      finalFilter.category = {
-        $in: categoryArray.map((id) => new Types.ObjectId(id)),
-      };
-    }
+  // 🔎 فلترة حسب التصنيفات
+  if (category) {
+    const categoryArray = Array.isArray(category) ? category : category.split(',');
+    finalFilter.category = { $in: categoryArray.map((id) => new Types.ObjectId(id)) };
+  }
 
-    
-    if (level) {
-      const levelArray = Array.isArray(level) ? level : level.split(',');
-      finalFilter.level = {
-        $in: levelArray.map((id) => new Types.ObjectId(id)),
-      };
-    }
+  // 🔎 فلترة حسب المستوى
+  if (level) {
+    const levelArray = Array.isArray(level) ? level : level.split(',');
+    finalFilter.level = { $in: levelArray.map((id) => new Types.ObjectId(id)) };
+  }
 
-    
-    if (primaryLanguage) {
-      finalFilter.primaryLanguage = primaryLanguage;
-    }
+  // 🔎 اللغة
+  if (primaryLanguage) {
+    finalFilter.primaryLanguage = primaryLanguage;
+  }
 
-    
-    let sortParam: any = {};
-    switch (sortBy) {
-      case 'price-lowtohigh':
-        sortParam = { pricing: 1 };
-        break;
-      case 'price-hightolow':
-        sortParam = { pricing: -1 };
-        break;
-      case 'title-atoz':
-        sortParam = { [`title.${lang}`]: 1 };
-        break;
-      case 'title-ztoa':
-        sortParam = { [`title.${lang}`]: -1 };
-        break;
-      default:
-        sortParam = { pricing: 1 };
-    }
+  // ✅ فلترة حسب الدور
+  const userRole = user?.role || user?.userType;
 
-    const validatedPage = Math.max(1, page);
-    const validatedLimit = Math.max(1, limit);
-    const skip = (validatedPage - 1) * validatedLimit;
+  if (userRole === 'student') {
+    const student = await this.studentModel.findOne({ userId: user.id }).lean();
+    const studentCourseIds = student?.courses
+      ?.flatMap((c) => c.idCourses)
+      ?.filter(Boolean)
+      ?.map((id) => new Types.ObjectId(id)) || [];
 
-    const totalCourses = await this.courseModel.countDocuments(finalFilter);
+    finalFilter._id = { $in: studentCourseIds };
 
-    const courses = await this.courseModel
-      .find(finalFilter)
-      .populate('category', 'title')
-      .populate('level', 'title')
-      .populate({
-        path: 'students',
-        populate: {
-          path: 'userId',
-          model: 'User',
-          select: '_id userName userEmail gender',
-        },
-      })
-      .sort(sortParam)
-      .skip(skip)
-      .limit(limit)
-      .exec();
+  } else if (userRole === 'teacher') {
+    finalFilter.instructorId = new Types.ObjectId(user.id);
 
-    const localizedCourses = courses.map((course) => {
-      const obj = course.toObject();
+  } else if (userRole === 'admin') {
+    // ✅ لا نضيف أي فلتر إضافي => يرجع كل الكورسات
+  } else {
+    // 🔒 غير معروف => ما نرجع شي
+    finalFilter._id = { $in: [] };
+  }
 
-      const categoryTitle =
-        obj.category &&
-        typeof obj.category !== 'string' &&
-        'title' in obj.category
-          ? obj.category.title
-          : {};
+  // 🔃 الفرز
+  let sortParam: any = {};
+  switch (sortBy) {
+    case 'price-lowtohigh': sortParam = { pricing: 1 }; break;
+    case 'price-hightolow': sortParam = { pricing: -1 }; break;
+    case 'title-atoz': sortParam = { [`title.${lang}`]: 1 }; break;
+    case 'title-ztoa': sortParam = { [`title.${lang}`]: -1 }; break;
+    default: sortParam = { pricing: 1 };
+  }
 
-      const levelTitle =
-        obj.level && typeof obj.level !== 'string' && 'title' in obj.level
-          ? obj.level.title
-          : {};
+  const validatedPage = Math.max(1, page);
+  const validatedLimit = Math.max(1, limit);
+  const skip = (validatedPage - 1) * validatedLimit;
 
-      const formattedStudents = (obj.students || [])
-        .map((student: any) => {
-          const user = student.userId;
-          if (!user) return null;
+  // 🧮 عدد الكورسات
+  const totalCourses = await this.courseModel.countDocuments(finalFilter);
 
-          return {
-            _id: user._id,
-            userName: user.userName,
-            userEmail: user.userEmail,
-            gender: user.gender,
-          };
-        })
-        .filter(Boolean);
+  // 📦 جلب الكورسات
+  const courses = await this.courseModel
+    .find(finalFilter)
+    .populate('category', 'title')
+    .populate('level', 'title')
+    .sort(sortParam)
+    .skip(skip)
+    .limit(validatedLimit)
+    .lean();
 
-      const isStudent = user?.role === 'student';
-
-      if (isStudent) {
-        return {
-          ...obj,
-          title: obj.title?.[lang] ?? '',
-          description: obj.description?.[lang] ?? '',
-          subtitle: obj.subtitle?.[lang] ?? '',
-          welcomeMessage: obj.welcomeMessage?.[lang] ?? '',
-          objectives: obj.objectives?.[lang] ?? '',
-          level: levelTitle?.[lang] ?? '',
-          category: categoryTitle?.[lang] ?? '',
-          students: formattedStudents,
-          createdAt:
-            (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
-        };
-      } else {
-        return {
-          ...obj,
-          title: obj.title ?? {},
-          description: obj.description ?? {},
-          subtitle: obj.subtitle ?? {},
-          welcomeMessage: obj.welcomeMessage ?? {},
-          objectives: obj.objectives ?? {},
-          level: levelTitle ?? {},
-          category: categoryTitle ?? {},
-          students: formattedStudents,
-          createdAt:
-            (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
-        };
-      }
-    });
+  // 🔄 تجهيز البيانات
+  const localizedCourses = courses.map((course) => {
+    const categoryTitle = (course.category as any)?.title ?? {};
+    const levelTitle = (course.level as any)?.title ?? {};
 
     return {
-      totalCourses,
-      totalPages: Math.ceil(totalCourses / limit),
-      currentPage: page,
-      courses: localizedCourses,
+      ...course,
+      title: course.title?.[lang] ?? '',
+      description: course.description?.[lang] ?? '',
+      subtitle: course.subtitle?.[lang] ?? '',
+      welcomeMessage: course.welcomeMessage?.[lang] ?? '',
+      objectives: course.objectives?.[lang] ?? '',
+      level: {
+        en: levelTitle?.en ?? '',
+        ar: levelTitle?.ar ?? '',
+      },
+      category: {
+        en: categoryTitle?.en ?? '',
+        ar: categoryTitle?.ar ?? '',
+      },
+      createdAt: (course as any).createdAt ?? course._id?.getTimestamp?.() ?? null,
     };
-  }
+  });
+
+  return {
+    totalCourses,
+    totalPages: Math.ceil(totalCourses / validatedLimit),
+    currentPage: validatedPage,
+    courses: localizedCourses,
+  };
+}
+
   // Get all courses with filters, sorting, pagination, and role-based access for teacher
   public async getCoursesByInstructor(
   instructorId: string,
