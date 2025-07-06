@@ -146,13 +146,14 @@ export class StudentCourseService {
   public async checkCoursePurchaseInfo(
   courseId: Types.ObjectId,
   user: JWTPayloadType,
-  lang: 'en' | 'ar' = 'en'
+  lang: 'en' | 'ar' = 'en',
 ) {
   lang = ['en', 'ar'].includes(lang) ? lang : 'en';
-  const _userId = new Types.ObjectId(user.id);
 
-  const student = await this.studentModel.findOne({ userId: _userId });
+  const userObjectId = new Types.ObjectId(user.id);
 
+  // ❗ نحصل على الطالب
+  const student = await this.studentModel.findOne({ userId: userObjectId }).lean();
   if (!student) {
     throw new NotFoundException(
       getLangMessage(lang, {
@@ -162,23 +163,37 @@ export class StudentCourseService {
     );
   }
 
-  const alreadyPurchased = student.courses.some(course =>
-    course.idCourses.some((id) => id.toString() === courseId.toString())
+  const studentIdStr = student._id.toString();
+  const courseIdStr = courseId.toString();
+
+  // ❗ التحقق من جهة الكورس
+  const course = await this.courseModel
+    .findById(courseId)
+    .select('students')
+    .lean();
+
+  const isInCourse =
+    course?.students?.some((std) => std?.toString?.() === studentIdStr) ?? false;
+
+  // ❗ التحقق الإضافي من جهة الطالب (احتياطي)
+  const isInStudent = student.courses?.some((c) =>
+    c.idCourses?.some((id) => id?.toString?.() === courseIdStr),
   );
 
+  const purchased = isInCourse || isInStudent;
+
   return {
-    purchased: alreadyPurchased,
+    purchased,
     message: getLangMessage(lang, {
-      en: alreadyPurchased
+      en: purchased
         ? 'Course already purchased by student'
         : 'Course not purchased by this student',
-      ar: alreadyPurchased
+      ar: purchased
         ? 'تم شراء هذه الدورة مسبقًا'
         : 'لم يقم الطالب بشراء هذه الدورة',
     }),
   };
 }
-
   public async UpdateStudentCourses(order: HydratedDocument<Order>) {
     let studentCourse = await this.studentModel.findOne({ userId: order.userId });
 

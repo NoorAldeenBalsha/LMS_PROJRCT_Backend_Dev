@@ -61,7 +61,7 @@ export class StudentCourseController {
     const lang = req.lang||'en';
     return this.studentCourseService.checkCoursePurchaseInfo(new Types.ObjectId(courseId),user,lang);
   }
-
+ 
   // ─────────────────────────────────────────────────────────────
   // Admin and Teacher endpoints
   // ─────────────────────────────────────────────────────────────
