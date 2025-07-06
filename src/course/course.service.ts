@@ -314,10 +314,10 @@ export class CourseService {
   const filter = { instructorId: new Types.ObjectId(instructorId) };
   const skip = (page - 1) * limit;
 
-  // ✅ احسب عدد الكورسات الفعلي الموجود
+  
   const totalCourses = await this.courseModel.countDocuments(filter);
 
-  // ✅ جلب الكورسات مع علاقاتها
+ 
   const courses = await this.courseModel
     .find(filter)
     .populate('category', 'title')
@@ -326,7 +326,7 @@ export class CourseService {
     .limit(limit)
     .lean();
 
-  // ✅ معالجة الترجمة والتحقق من وجود التصنيفات والمستويات
+  
   const localizedCourses = courses.map((course) => {
     const levelTitle = (course.level && typeof course.level === 'object' && 'title' in course.level)
       ? (course.level as any).title ?? {}

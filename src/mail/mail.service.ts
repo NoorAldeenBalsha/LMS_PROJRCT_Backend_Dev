@@ -22,13 +22,14 @@ export class MailService {
 
   async sendVerifyEmailTemplate(
   toEmail: string,
-  verificationToken: string,
+  token: string,
   lang: 'ar' | 'en' = 'en'
 ) {
-  const baseUrl = process.env.API_BASE_URL  ; // fallback for dev
-  const verificationLink = `${baseUrl}/auth/verify-email?token=${verificationToken}`;
-
   const subject = lang === 'ar' ? 'تأكيد البريد الإلكتروني' : 'Email Verification';
+
+  const apiBaseUrl = this.configService.get<string>('API_BASE_URL') || 'http://localhost:5000';
+  const verificationLink = `${apiBaseUrl}/auth/verify-email?token=${token}`;
+
   const text =
     lang === 'ar'
       ? 'مرحباً، الرجاء الضغط على الزر التالي لتأكيد بريدك الإلكتروني.'
