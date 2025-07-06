@@ -22,15 +22,16 @@ export class MailService {
 
   async sendVerifyEmailTemplate(
   toEmail: string,
-  token: string,
+  verificationLink: string,
   lang: 'ar' | 'en' = 'en'
 ) {
-  const subject =
-    lang === 'ar' ? 'تأكيد البريد الإلكتروني' : 'Email Verification';
+  // استبدال localhost بـ رابط الـ API الأساسي
+  const fullLink = verificationLink.replace(
+    'http://localhost:5000',
+    'https://lmsprojrctbackenddev-production-6b49.up.railway.app'
+  );
 
-  // ✅ رابط التحقق النهائي اليدوي:
-  const verificationLink = `https://lmsprojrctbackenddev-production-6b49.up.railway.app/auth/verify-email?token=${token}`;
-
+  const subject = lang === 'ar' ? 'تأكيد البريد الإلكتروني' : 'Email Verification';
   const text =
     lang === 'ar'
       ? 'مرحباً، الرجاء الضغط على الزر التالي لتأكيد بريدك الإلكتروني.'
@@ -39,14 +40,14 @@ export class MailService {
   const html =
     lang === 'ar'
       ? `
-    <div dir="rtl" style="font-family: 'Tahoma', 'Arial', sans-serif; background-color: #f9f9f9; padding: 40px;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <div dir="rtl" style="font-family: 'Tahoma', 'Arial', sans-serif; background-color: #f2f2f2; padding: 40px;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <h2 style="color: #333;">مرحباً بك،</h2>
-        <p style="font-size: 15px; color: #555;">
+        <p style="font-size: 16px; color: #555;">
           شكراً لانضمامك إلينا. لتفعيل حسابك، اضغط على الزر أدناه:
         </p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${verificationLink}" style="background-color: #28a745; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px;">
+          <a href="${fullLink}" style="background-color: #28a745; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; display: inline-block;">
             تأكيد البريد الإلكتروني
           </a>
         </div>
@@ -54,14 +55,14 @@ export class MailService {
     </div>
     `
       : `
-    <div style="font-family: 'Arial', sans-serif; background-color: #f9f9f9; padding: 40px;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <div style="font-family: 'Arial', sans-serif; background-color: #f2f2f2; padding: 40px;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <h2 style="color: #333;">Welcome,</h2>
-        <p style="font-size: 15px; color: #555;">
+        <p style="font-size: 16px; color: #555;">
           Thank you for joining us. To activate your account, please click the button below:
         </p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${verificationLink}" style="background-color: #007bff; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px;">
+          <a href="${fullLink}" style="background-color: #007bff; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; display: inline-block;">
             Verify Email
           </a>
         </div>
