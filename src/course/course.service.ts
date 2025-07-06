@@ -163,6 +163,7 @@ export class CourseService {
 
     const finalFilter: any = {};
 
+    
     if (category) {
       const categoryArray = Array.isArray(category)
         ? category
@@ -172,6 +173,7 @@ export class CourseService {
       };
     }
 
+    
     if (level) {
       const levelArray = Array.isArray(level) ? level : level.split(',');
       finalFilter.level = {
@@ -179,10 +181,12 @@ export class CourseService {
       };
     }
 
+    
     if (primaryLanguage) {
       finalFilter.primaryLanguage = primaryLanguage;
     }
 
+    
     let sortParam: any = {};
     switch (sortBy) {
       case 'price-lowtohigh':
@@ -255,18 +259,35 @@ export class CourseService {
 
       const isStudent = user?.role === 'student';
 
-      return {
-        ...obj,
-        title: obj.title ?? {},
-        description: obj.description ?? {},
-        subtitle: obj.subtitle ?? {},
-        welcomeMessage: obj.welcomeMessage ?? {},
-        objectives: obj.objectives ?? {},
-        level: levelTitle ?? {},
-        category: categoryTitle ?? {},
-        students: formattedStudents,
-        createdAt: (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
-      };
+      if (isStudent) {
+        return {
+          ...obj,
+          title: obj.title?.[lang] ?? '',
+          description: obj.description?.[lang] ?? '',
+          subtitle: obj.subtitle?.[lang] ?? '',
+          welcomeMessage: obj.welcomeMessage?.[lang] ?? '',
+          objectives: obj.objectives?.[lang] ?? '',
+          level: levelTitle?.[lang] ?? '',
+          category: categoryTitle?.[lang] ?? '',
+          students: formattedStudents,
+          createdAt:
+            (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
+        };
+      } else {
+        return {
+          ...obj,
+          title: obj.title ?? {},
+          description: obj.description ?? {},
+          subtitle: obj.subtitle ?? {},
+          welcomeMessage: obj.welcomeMessage ?? {},
+          objectives: obj.objectives ?? {},
+          level: levelTitle ?? {},
+          category: categoryTitle ?? {},
+          students: formattedStudents,
+          createdAt:
+            (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
+        };
+      }
     });
 
     return {
