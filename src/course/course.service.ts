@@ -297,6 +297,71 @@ export class CourseService {
       courses: localizedCourses,
     };
   }
+  // Get all courses with filters, sorting, pagination, and role-based access for teacher
+  public async getCoursesByInstructor(
+  instructorId: string,
+  lang: 'en' | 'ar' = 'en',
+  page: number = 1,
+  limit: number = 10,
+): Promise<{
+  totalCourses: number;
+  totalPages: number;
+  currentPage: number;
+  courses: any[];
+}> {
+  lang = ['en', 'ar'].includes(lang) ? lang : 'en';
+
+  const filter = { instructorId: new Types.ObjectId(instructorId) };
+  const skip = (page - 1) * limit;
+
+  // ✅ احسب عدد الكورسات الفعلي الموجود
+  const totalCourses = await this.courseModel.countDocuments(filter);
+
+  // ✅ جلب الكورسات مع علاقاتها
+  const courses = await this.courseModel
+    .find(filter)
+    .populate('category', 'title')
+    .populate('level', 'title')
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  // ✅ معالجة الترجمة والتحقق من وجود التصنيفات والمستويات
+  const localizedCourses = courses.map((course) => {
+    const levelTitle = (course.level && typeof course.level === 'object' && 'title' in course.level)
+      ? (course.level as any).title ?? {}
+      : {};
+
+    const categoryTitle = (course.category && typeof course.category === 'object' && 'title' in course.category)
+      ? (course.category as any).title ?? {}
+      : {};
+
+    return {
+      ...course,
+      title: course.title?.[lang] ?? '',
+      subtitle: course.subtitle?.[lang] ?? '',
+      description: course.description?.[lang] ?? '',
+      welcomeMessage: course.welcomeMessage?.[lang] ?? '',
+      objectives: course.objectives?.[lang] ?? '',
+      createdAt: (course as any).createdAt ?? course._id?.getTimestamp?.() ?? null,
+      level: {
+        en: levelTitle?.en ?? '',
+        ar: levelTitle?.ar ?? '',
+      },
+      category: {
+        en: categoryTitle?.en ?? '',
+        ar: categoryTitle?.ar ?? '',
+      },
+    };
+  });
+
+  return {
+    totalCourses,
+    totalPages: Math.ceil(totalCourses / limit),
+    currentPage: page,
+    courses: localizedCourses,
+  };
+}
   //============================================================================
   // Get all courses  sorting, pagination, and role-based access
   public async getAllCoursesNoFilter(
@@ -737,56 +802,7 @@ export class CourseService {
       title: cat.title ?? '',
     }));
   }
-  // Get all courses with filters, sorting, pagination, and role-based access for teacher
-  public async getCoursesByInstructor(
-    instructorId: string,
-    lang: 'en' | 'ar' = 'en',
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<{
-    totalCourses: number;
-    totalPages: number;
-    currentPage: number;
-    courses: any[];
-  }> {
-    lang = ['en', 'ar'].includes(lang) ? lang : 'en';
-
-    const filter = { instructorId: new Types.ObjectId(instructorId) };
-
-    const skip = (page - 1) * limit;
-    const totalCourses = await this.courseModel.countDocuments(filter);
-
-    const courses = await this.courseModel
-      .find(filter)
-      .populate('category', 'title')
-      .populate('level', 'title')
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    const localizedCourses = courses.map((course) => ({
-      ...course.toObject(),
-      title: course.title?.[lang] || '',
-      description: course.description?.[lang] || '',
-      subtitle: course.subtitle?.[lang] || '',
-      welcomeMessage: course.welcomeMessage?.[lang] || '',
-      level: {
-        en: (course.level as any)?.title?.en || '',
-        ar: (course.level as any)?.title?.ar || '',
-      },
-      category: {
-        en: (course.category as any)?.title?.en || '',
-        ar: (course.category as any)?.title?.ar || '',
-      },
-    }));
-
-    return {
-      totalCourses,
-      totalPages: Math.ceil(totalCourses / limit),
-      currentPage: page,
-      courses: localizedCourses,
-    };
-  }
+  
   //============================================================================
   public async getCourseDistributionByCategory(
     lang: 'en' | 'ar' = 'en',
