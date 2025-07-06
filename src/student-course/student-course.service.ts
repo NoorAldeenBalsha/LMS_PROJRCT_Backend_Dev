@@ -7,6 +7,7 @@ import { JWTPayloadType } from 'utilitis/types';
 import { Order } from '../order/schema/order.schema';
 import { Course } from '../course/schemas/course.schema';
 import { Request } from 'express';
+import { User } from 'src/user/schemas/user.schema';
 
 function getLangMessage(lang: 'en' | 'ar' = 'en', messages: { ar: string; en: string }) {
   return messages[lang];
@@ -25,20 +26,34 @@ export class StudentCourseService {
   constructor(
     @InjectModel(Student.name) private readonly studentModel: Model<Student>,
     @InjectModel(Course.name) private readonly courseModel: Model<Course>,
+    @InjectModel(User.name) private readonly userModel: Model<User>,
     @Inject(forwardRef(() => CourseService)) private readonly courseService: CourseService,
   ) {}
-  public async enrollStudentInCourse(userId: Types.ObjectId, courseId: Types.ObjectId) {
-  // نحصل على الـ student document الفعلي
-  let student = await this.studentModel.findOne({ userId });
+  public async enrollStudentInCourse(
+  userId: Types.ObjectId,
+  courseId: Types.ObjectId,
+) {
+  // ✅ جلب المستخدم والطالب
+  const [user, student] = await Promise.all([
+    this.userModel.findById(userId),
+    this.studentModel.findOne({ userId }),
+  ]);
 
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  let updatedStudent = student;
+
+  // ✅ إنشاء سجل الطالب إذا غير موجود
   if (!student) {
-    student = new this.studentModel({
+    updatedStudent = new this.studentModel({
       userId,
       courses: [{
         idCourses: [courseId],
         dateOfPurchase: new Date(),
         ViewAt: null,
-      }]
+      }],
     });
   } else {
     const alreadyEnrolled = student.courses.some(entry =>
@@ -54,17 +69,25 @@ export class StudentCourseService {
     }
   }
 
-  await student.save();
+  // ✅ حفظ الطالب
+  await updatedStudent.save();
 
-  // تحديث قائمة الطلاب داخل الكورس
-  const studentId = student._id;
-
+  // ✅ تحديث الكورس ليحتوي الطالب
   await this.courseModel.findByIdAndUpdate(courseId, {
-    $addToSet: { students: studentId }
+    $addToSet: { students: updatedStudent._id },
   });
 
-  return student;
-  }
+  // ✅ تحديث user.enrolledCourses
+  await this.userModel.updateOne(
+    { _id: userId },
+    { $addToSet: { enrolledCourses: courseId } }
+  );
+
+  return {
+    message: 'Student enrolled successfully',
+    student: updatedStudent,
+  };
+}
 
   public async getStudent(userId: string | Types.ObjectId, lang: 'en' | 'ar' = 'en') {
     lang=['en','ar'].includes(lang)?lang:'en';

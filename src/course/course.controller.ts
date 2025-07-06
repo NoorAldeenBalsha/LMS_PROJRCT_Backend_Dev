@@ -109,33 +109,33 @@ export class CourseController {
     );
   }
   // GET ALL COURSES [PUBLIC]
-  @Get()
-  @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Get all courses with filters (role-based)' })
-  @ApiResponse({ status: 200, description: 'Courses fetched successfully' })
-  public async getAllCourses(
-    @Req() req: any,
-    @Query('category') category?: string | string[],
-    @Query('level') level?: string | string[],
-    @Query('primaryLanguage') primaryLanguage?: string,
-    @Query('sortBy') sortBy: string = 'price-lowtohigh',
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-    @Query('useFilter') useFilter: boolean = false,
-    @Headers('lang') lang: 'en' | 'ar' = 'en',
-  ) {
-    return this.courseService.getAllCourses(
-      category,
-      level,
-      primaryLanguage,
-      sortBy,
-      page,
-      limit,
-      useFilter,
-      lang,
-      req.user, // ⬅️ مهم جداً تمرير اليوزر من التوكن
-    );
-  }
+@Get()
+@UseGuards(AuthGuard)
+@ApiOperation({ summary: 'Retrieve all courses with optional filters' })
+@ApiResponse({ status: 200, description: 'Courses fetched successfully' })
+public getAllCourses(
+  @Req() req: any,
+  @Query('category') category?: string | string[],
+  @Query('level') level?: string | string[],
+  @Query('primaryLanguage') primaryLanguage?: string,
+  @Query('sortBy') sortBy?: string,
+  @Query('page') page = 1,
+  @Query('limit') limit = 10,
+  @Query('useFilter') useFilter = false,
+  @Headers('lang') lang: 'en' | 'ar' = 'en',
+) {
+  return this.courseService.getAllCourses(
+    category,
+    level,
+    primaryLanguage,
+    sortBy,
+    Number(page),
+    Number(limit),
+    Boolean(useFilter),
+    lang,
+    req.user,
+  );
+}
   //Get All Courses [PUBLIC]
   @Get('all-filter')
   @ApiOperation({ summary: 'Retrieve all courses without role restrictions' })

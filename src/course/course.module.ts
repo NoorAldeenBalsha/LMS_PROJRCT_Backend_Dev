@@ -12,6 +12,7 @@ import { CourseProgress, CourseProgressSchema } from 'src/course-progress/schema
 import { Student, StudentCourseSchema } from '../student-course/schemas/student-course.schema';
 import { Category, CategorySchema } from './schemas/category.schema';
 import { Level, LevelSchema } from './schemas/level.schema';
+import { User, UserSchema } from 'src/user/schemas/user.schema';
 
 @Module({
   controllers: [CourseController],
@@ -37,6 +38,10 @@ import { Level, LevelSchema } from './schemas/level.schema';
       { 
         name: Level.name, 
         schema: LevelSchema 
+      },
+      { 
+        name: User.name, 
+        schema: UserSchema 
       },
     ]),
     DatabaseModule,
