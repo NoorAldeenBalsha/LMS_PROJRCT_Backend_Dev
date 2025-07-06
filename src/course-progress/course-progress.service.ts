@@ -118,14 +118,18 @@ export class CourseProgressService {
       limit: number = 10,
       lang: 'en' | 'ar' = 'en'
     ): Promise<any> {
-      lang=['en','ar'].includes(lang)?lang:'en';
+      lang = ['en', 'ar'].includes(lang) ? lang : 'en';
       try {
         page = Math.max(1, page);
         limit = Math.min(Math.max(1, limit), 100);
-
+    
         const studentRecord = await this.studentCourseService.getStudent(currentUser.id);
-        const purchased = studentRecord.courses.find(entry => entry.idCourses.includes(courseId));
-
+        
+        // Fix 1: Properly compare ObjectIds by converting to string
+        const purchased = studentRecord.courses.some(entry => 
+          entry.idCourses.some(id => id.toString() === courseId.toString())
+        );
+    
         if (!purchased) {
           return {
             isPurchased: false,
@@ -135,9 +139,13 @@ export class CourseProgressService {
             }),
           };
         }
-
-        const progress = await this.courseProgress.findOne({ userId: currentUser.id, courseId });
-
+    
+        // Fix 2: Make sure field name matches your schema (LectureProgres vs lecturesProgress)
+        const progress = await this.courseProgress.findOne({ 
+          userId: currentUser.id, 
+          courseId 
+        });
+    
         const courseDetails = await this.courseService.getCourseDetailsByID(courseId);
         if (!courseDetails) {
           throw new NotFoundException(getLangMessage(lang, {
@@ -145,8 +153,10 @@ export class CourseProgressService {
             ar: 'لم يتم العثور على الدورة',
           }));
         }
-
-        if (!progress || progress.LectureProgres.length === 0) {
+    
+        // Fix 3: Check the correct progress field (LectureProgres vs lecturesProgress)
+        const progressArray = progress?.LectureProgres || progress?.lecturesProgress || [];
+        if (progressArray.length === 0) {
           return {
             message: getLangMessage(lang, {
               en: 'No progress found, you can start watching the course.',
@@ -159,12 +169,11 @@ export class CourseProgressService {
             },
           };
         }
-
-        const lecturesProgress = progress.LectureProgres;
+    
         const startIndex = (page - 1) * limit;
         const endIndex = startIndex + limit;
-        const paginatedLectures = lecturesProgress.slice(startIndex, endIndex);
-
+        const paginatedLectures = progressArray.slice(startIndex, endIndex);
+    
         return {
           data: {
             courseDetails,
@@ -173,8 +182,8 @@ export class CourseProgressService {
             completionDate: progress.completionDate,
             isPurchased: true,
             pagination: {
-              totalLectures: lecturesProgress.length,
-              totalPages: Math.ceil(lecturesProgress.length / limit),
+              totalLectures: progressArray.length,
+              totalPages: Math.ceil(progressArray.length / limit),
               currentPage: page,
               perPage: limit,
             },
