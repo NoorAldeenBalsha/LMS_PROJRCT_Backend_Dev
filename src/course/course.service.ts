@@ -549,9 +549,7 @@ export class CourseService {
       subtitle: courseDetails.subtitle ?? { en: '', ar: '' },
       description: courseDetails.description ?? { en: '', ar: '' },
       welcomeMessage: courseDetails.welcomeMessage ?? { en: '', ar: '' },
-      objectives: Array.isArray(courseDetails.objectives)
-        ? courseDetails.objectives
-        : [],
+      objectives: courseDetails.objectives ?? { en: '', ar: '' },
     };
   }
   //============================================================================
