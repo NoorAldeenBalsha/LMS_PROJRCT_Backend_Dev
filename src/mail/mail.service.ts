@@ -22,14 +22,17 @@ export class MailService {
 
   async sendVerifyEmailTemplate(
   toEmail: string,
-  verificationLink: string,
+  verificationToken: string,
   lang: 'ar' | 'en' = 'en'
 ) {
+  const baseUrl = process.env.API_BASE_URL  ; // fallback for dev
+  const verificationLink = `${baseUrl}/auth/verify-email?token=${verificationToken}`;
+
   const subject = lang === 'ar' ? 'تأكيد البريد الإلكتروني' : 'Email Verification';
   const text =
     lang === 'ar'
-      ?` مرحباً، الرجاء الضغط على الزر التالي لتأكيد بريدك الإلكتروني.`
-      : `Hello, please click the button below to verify your email.`;
+      ? 'مرحباً، الرجاء الضغط على الزر التالي لتأكيد بريدك الإلكتروني.'
+      : 'Hello, please click the button below to verify your email.';
 
   const html =
     lang === 'ar'
@@ -66,7 +69,6 @@ export class MailService {
 
   await this.sendEmail(toEmail, subject, text, html, lang);
 }
-
   async sendRestPasswordTemplate(toEmail: string, resetLink: string, lang: 'ar' | 'en' = 'en') {
     const subject = lang === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Password Reset';
     const text = lang === 'ar'
