@@ -404,9 +404,7 @@ export class CourseService {
         welcomeMessage: obj.welcomeMessage?.[lang] ?? '',
         level: levelTitle,
         category: categoryTitle,
-        objectives: Array.isArray(obj.objectives)
-          ? obj.objectives.map((o: any) => o?.[lang] ?? '')
-          : [],
+        objectives: obj.objectives?.[lang] ?? '',
         students: formattedStudents,
         createdAt: (obj as any).createdAt ?? obj._id?.getTimestamp?.() ?? null,
       };
