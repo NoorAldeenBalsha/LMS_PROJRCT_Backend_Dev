@@ -280,7 +280,7 @@ export class CourseService {
           description: obj.description ?? {},
           subtitle: obj.subtitle ?? {},
           welcomeMessage: obj.welcomeMessage ?? {},
-          objectives: obj.objectives ?? {},
+          objectives: obj.objectives?.[lang] ?? '',
           level: levelTitle ?? {},
           category: categoryTitle ?? {},
           students: formattedStudents,
