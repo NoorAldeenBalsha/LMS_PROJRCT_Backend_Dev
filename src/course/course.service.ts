@@ -438,8 +438,6 @@ export class CourseService {
       role = currentUser?.role ?? 'guest';
     }
 
-    const isStudent = role === 'student';
-
     const filter: any = { _id: id };
 
     if (Array.isArray(categoryIds) && categoryIds.length > 0) {
@@ -525,19 +523,6 @@ export class CourseService {
         ? { createdAt: courseDetails.createdAt }
         : {}),
     };
-
-    if (isStudent) {
-      return {
-        ...baseResponse,
-        title: getLocalizedValue(courseDetails.title),
-        category: getLocalizedValue(courseDetails.category?.title),
-        level: getLocalizedValue(courseDetails.level?.title),
-        subtitle: getLocalizedValue(courseDetails.subtitle),
-        description: getLocalizedValue(courseDetails.description),
-        welcomeMessage: getLocalizedValue(courseDetails.welcomeMessage),
-        objectives: getLocalizedArray(courseDetails.objectives),
-      };
-    }
 
     return {
       ...baseResponse,
